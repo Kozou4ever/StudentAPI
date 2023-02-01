@@ -1,109 +1,51 @@
 package main
 
 import (
-	"StudentAPI/database"
-	"github.com/labstack/echo/v4"
+	"StudentAPI/config"
+	"StudentAPI/controller"
+	"StudentAPI/model"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
 )
 
 func main() {
+	// Create HTTP server
 	e := echo.New()
-	database.Connect()
-	postgresDB, _ := database.DB.DB()
-	defer postgresDB.Close()
 	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"hello": "world",
+		})
 	})
 
-	e.POST("/student", saveStudent)
-	e.GET("/student/:id", getStudent)
-	e.PUT("/student/:id", updateStudent)
-	e.DELETE("/student/:id", deleteStudent)
+	// Connect To Database
+	config.DatabaseInit()
+	gorm := config.DB()
+	gorm.AutoMigrate(&model.Student{}, &model.Class{}, &model.Mark{})
 
-	e.POST("/class", saveClass)
-	e.GET("/student/:id", getClass)
-	e.PUT("/student/:id", updateClass)
-	e.DELETE("/student/:id", deleteClass)
-
-	e.GET("/class/students/:id", searchStudentsByClass)
-
-	e.Logger.Fatal(e.Start(":1323"))
-}
-
-func saveStudent(c echo.Context) error {
-	student := database.Student{}
-	if err := c.Bind(&student); err != nil {
-		return err
+	dbGorm, err := gorm.DB()
+	if err != nil {
+		panic(err)
 	}
-	database.DB.Create(&student)
-	return c.JSON(http.StatusCreated, student)
-}
+	defer dbGorm.Close()
 
-func getStudent(c echo.Context) error {
-	id := c.Param("id")
-	student := database.Student{}
-	database.DB.Find(&student, id)
-	return c.JSON(http.StatusOK, student)
-}
+	//Student API routes
+	studentRoute := e.Group("/student")
+	studentRoute.POST("/", controller.CreateStudent)
+	studentRoute.GET("/:id", controller.GetStudent)
+	studentRoute.PUT("/:id", controller.UpdateStudent)
+	studentRoute.DELETE("/:id", controller.DeleteStudent)
+	studentRoute.GET("/best_student/class/:id", controller.GetBestStudentInClass)
 
-func updateStudent(c echo.Context) error {
-	id := c.Param("id")
-	student := database.Student{}
-	if err := c.Bind(&student); err != nil {
-		return err
-	}
-	database.DB.Model(student).Where("id = ?", id).Updates(&student)
-	return c.JSON(http.StatusOK, student)
-}
+	//Student API routes
+	classRoute := e.Group("/class")
+	classRoute.POST("/", controller.CreateClass)
+	classRoute.GET("/:id", controller.GetClass)
+	classRoute.PUT("/:id", controller.UpdateClass)
+	classRoute.DELETE("/:id", controller.DeleteClass)
+	classRoute.GET("/:id/students", controller.GetClassStudents)
 
-func deleteStudent(c echo.Context) error {
-	id := c.Param("id")
-	student := database.Student{}
-	database.DB.Delete(&student, id)
-	return c.JSON(http.StatusOK, student)
-}
+	//Route to fetch student who has best note in x class
 
-func getClass(c echo.Context) error {
-	id := c.Param("id")
-	class := database.Class{}
-	database.DB.Find(&class, id)
-	return c.JSON(http.StatusOK, class)
-}
-
-func updateClass(c echo.Context) error {
-	id := c.Param("id")
-	class := database.Class{}
-	if err := c.Bind(&class); err != nil {
-		return err
-	}
-	database.DB.Model(class).Where("id = ?", id).Updates(&class)
-	return c.JSON(http.StatusOK, class)
-}
-
-func deleteClass(c echo.Context) error {
-	id := c.Param("id")
-	class := database.Class{}
-	database.DB.Delete(&class, id)
-	return c.JSON(http.StatusOK, class)
-}
-
-func saveClass(c echo.Context) error {
-	class := database.Class{}
-	if err := c.Bind(&class); err != nil {
-		return err
-	}
-	database.DB.Create(&class)
-	return c.JSON(http.StatusCreated, class)
-}
-
-func searchStudentsByClass(c echo.Context) error {
-	id := c.Param("id")
-
-	student := database.Student{}
-	if err := c.Bind(&student); err != nil {
-		return err
-	}
-
-	database.DB.Delete(&student, id)
-	return c.String(http.StatusOK, "User deleted!")
+	e.Logger.Fatal(e.Start(":8080"))
 }
