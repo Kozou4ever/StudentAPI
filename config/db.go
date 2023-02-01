@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -20,7 +21,7 @@ func DatabaseInit() {
 	database, e = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if e != nil {
-		panic("Failed to connect database...")
+		panic("Failed to connect to the database...")
 	}
 }
 
