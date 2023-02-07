@@ -32,7 +32,7 @@ func main() {
 	studentRoute.GET("/:id", controller.GetStudent)
 	studentRoute.PUT("/:id", controller.UpdateStudent)
 	studentRoute.DELETE("/:id", controller.DeleteStudent)
-	studentRoute.GET("/best_student/class/:id", controller.GetBestStudentInClass)
+	studentRoute.GET("/beststudent", controller.GetBestStudents)
 
 	//Student API routes
 	classRoute := e.Group("/class")

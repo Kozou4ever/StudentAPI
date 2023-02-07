@@ -4,7 +4,6 @@ import (
 	"StudentAPI/config"
 	"StudentAPI/model"
 	"net/http"
-	"strconv"
 
 	"github.com/labstack/echo/v4"
 )
@@ -116,48 +115,46 @@ func DeleteStudent(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-func GetBestStudentInClass(c echo.Context) error {
+type BestStudent struct {
+	ClassName string `json:"class_name"`
+	Name      string `json:"student_name"`
+	Value     int    `json:"value"`
+}
+
+func GetBestStudents(c echo.Context) error {
 	db := config.DB()
-	classID, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err != nil {
-		data := map[string]interface{}{
-			"message": "Invalid class ID",
+	var bestStudents []BestStudent
+
+	// Select all classes
+	var classes []model.Class
+	db.Find(&classes)
+
+	// Loop through each class
+	for _, class := range classes {
+		var bestStudent BestStudent
+		bestStudent.ClassName = class.ClassName
+
+		// Select all marks for the current class
+		var marks []model.Mark
+		db.Model(&class).Association("Marks").Find(&marks)
+
+		// Find the mark with the highest value for the current class
+		maxValue := 0
+		var bestStudentID uint
+		for _, mark := range marks {
+			if int(mark.Value) > maxValue {
+				maxValue = int(mark.Value)
+				bestStudentID = uint(mark.StudentID)
+			}
 		}
-		return c.JSON(http.StatusBadRequest, data)
+
+		// Get the student with the highest mark for the current class
+		var student model.Student
+		db.First(&student, bestStudentID)
+		bestStudent.Name = student.StudentName
+		bestStudent.Value = maxValue
+		bestStudents = append(bestStudents, bestStudent)
 	}
 
-	var student model.Student
-	var marks []model.Mark
-	
-	err = db.Where("class_id = ?", classID).Find(&marks).Error
-	if err != nil {
-		data := map[string]interface{}{
-			"message": "No marks found for the class",
-		}
-		return c.JSON(http.StatusBadRequest, data)
-	}
-
-	var highestMark float64
-	var bestStudentID uint
-
-	for _, mark := range marks {
-		if mark.Value > highestMark {
-			highestMark = mark.Value
-			bestStudentID = mark.StudentID
-		}
-	}
-
-	err = db.Where("id = ?", bestStudentID).First(&student).Error
-	if err != nil {
-		data := map[string]interface{}{
-			"message": "No student found with the highest mark",
-		}
-		return c.JSON(http.StatusBadRequest, data)
-	}
-
-	response := map[string]interface{}{
-		"data": &student,
-	}
-
-	return c.JSON(http.StatusOK, response)
+	return c.JSON(http.StatusOK, bestStudents)
 }
