@@ -5,4 +5,5 @@ type Student struct {
 	StudentName string  `json:"name"`
 	Classes     []Class `gorm:"many2many:student_classes"`
 	Marks       []Mark  `gorm:"foreignkey:StudentID"`
+	rank        *int
 }
