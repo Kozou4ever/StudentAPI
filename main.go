@@ -29,20 +29,19 @@ func main() {
 	//Student API routes
 	studentRoute := e.Group("/student")
 	studentRoute.POST("/", controller.CreateStudent)
-	studentRoute.GET("/:id", controller.GetStudent)
-	studentRoute.PUT("/:id", controller.UpdateStudent)
+	studentRoute.GET("/:id", controller.GetStudentDetails)
+	studentRoute.PUT("/:id", controller.UpdateStudentDetails)
 	studentRoute.DELETE("/:id", controller.DeleteStudent)
-	studentRoute.GET("/best_student/class/:id", controller.GetBestStudentInClass)
-	studentRoute.GET("/best-student/:rank", controller.GetBestStudents)
-	
+	studentRoute.GET("/rank-student/:rank", controller.RankStudents)
+	studentRoute.GET("/best-student", controller.BestStudents)
+
 	//Student API routes
 	classRoute := e.Group("/class")
 	classRoute.POST("/", controller.CreateClass)
-	classRoute.GET("/:id", controller.GetClass)
-	classRoute.PUT("/:id", controller.UpdateClass)
+	classRoute.GET("/:id", controller.GetClassDetails)
+	classRoute.PUT("/:id", controller.UpdateClassDetails)
 	classRoute.DELETE("/:id", controller.DeleteClass)
-	classRoute.GET("/:id/students", controller.GetClassStudents)
-
+	classRoute.GET("/:id/top-student", controller.GetTopStudentsClass)
 	//Start server in 8080 port
 	e.Logger.Fatal(e.Start(":8080"))
 }

@@ -35,7 +35,7 @@ func CreateClass(c echo.Context) error {
 	return c.JSON(http.StatusCreated, response)
 }
 
-func GetClass(c echo.Context) error {
+func GetClassDetails(c echo.Context) error {
 	id := c.Param("id")
 	db := config.DB()
 
@@ -56,7 +56,7 @@ func GetClass(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-func UpdateClass(c echo.Context) error {
+func UpdateClassDetails(c echo.Context) error {
 	id := c.Param("id")
 	class := model.Class{}
 	db := config.DB()
